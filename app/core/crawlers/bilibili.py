@@ -338,7 +338,6 @@ if __name__ == "__main__":
     resolver = BiliVideoResolver()
     resolver.set_credential(cred)
     resolver.set_bvid("BV1nqyMBKEqv")  # 换你想解析的视频
-
     # 3. 解析
     resolver.parse()
 
