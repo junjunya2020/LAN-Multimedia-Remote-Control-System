@@ -142,7 +142,7 @@ http://[服务器IP地址]:5000
 ## 📞 联系我们
 
 如有问题或建议，请通过以下方式联系：
-- 提交 [Issue](https://github.com/your-username/audioshpere-control/issues)
+- 提交 [Issue]
 - 发送邮件至：junmr3529@gmail.com
 
 ---

@@ -110,7 +110,7 @@ class AddPlayPistDouyinView(MethodView):
             
             # 创建项目临时目录
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            temp_dir = os.path.join(project_root, "temp")
+            temp_dir = os.path.join(project_root, "downloads/douyin")
             if not os.path.exists(temp_dir):
                 os.makedirs(temp_dir)
             

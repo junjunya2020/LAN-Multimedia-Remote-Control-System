@@ -158,6 +158,39 @@ async function addDouyinAudio() {
     }
 }
 
+// 添加Bilibili视频到播放列表
+async function addBilibiliVideo() {
+    // 获取Bilibili URL或BV号
+    const input = prompt('请输入Bilibili视频URL或BV号:');
+    if (!input || input.trim() === '') {
+        return; // 用户取消或输入为空
+    }
+
+    try {
+        // 调用后端API添加Bilibili视频
+        const response = await apiGet('api/add_play_list_bilibili', {
+            url: input.trim()
+        });
+        
+        if (response.success) {
+            show.log('Bilibili视频添加成功');
+            await refreshPlaylist(); // 刷新播放列表
+        } else {
+            // 根据debug变量决定显示内容
+            const errorMsg = (typeof debug !== 'undefined' && debug) 
+                ? JSON.stringify(response.data, null, 2)
+                : response.data.message;
+            show.error('添加Bilibili视频失败: ' + errorMsg);
+        }
+    } catch (error) {
+        // 根据debug变量决定显示内容
+        const errorMsg = (typeof debug !== 'undefined' && debug) 
+            ? error 
+            : '添加Bilibili视频时发生错误';
+        show.error(errorMsg);
+    }
+}
+
 // 清空播放列表
 async function clearPlaylist() {
     if (playlist.length === 0) return;

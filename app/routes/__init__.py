@@ -25,6 +25,7 @@ from .player import (
 )
 from .crawlers.douyin import AddPlayPistDouyinView
 from .crawlers.Netease import SearchLyricsView, SelectLyricsView, SaveLyricsView
+from .crawlers.bilibili import AddPlayListBilibiliView
 # ================== 统一注册路由 ==================
 def _register_routes():
     player_bp.add_url_rule("/", view_func=IndexView.as_view('index'))
@@ -75,6 +76,8 @@ def _register_routes():
     player_bp.add_url_rule("/api/netease/search_lyrics", view_func=SearchLyricsView.as_view('netease_search_lyrics'))
     player_bp.add_url_rule("/api/netease/select_lyrics", view_func=SelectLyricsView.as_view('netease_select_lyrics'))
     player_bp.add_url_rule("/api/netease/save_lyrics", view_func=SaveLyricsView.as_view('netease_save_lyrics'))
+    # Bilibili 视频路由（简化版）
+    player_bp.add_url_rule("/api/add_play_list_bilibili", view_func=AddPlayListBilibiliView.as_view('add_play_list_bilibili'))
     # 直播路由
 _register_routes()
 
