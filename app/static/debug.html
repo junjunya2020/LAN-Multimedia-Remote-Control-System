@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.IO 调试面板</title>
+    <style>
+        body {font-family: Consolas, monospace; background:#000; color:#0f0; padding:20px; line-height:1.8;}
+        h1 {text-align:center; color:#0f0; text-shadow:0 0 10px #0f0;}
+        #log {margin-top:20px; padding:15px; background:#111; border:1px solid #0f0; border-radius:8px; min-height:500px; overflow-y:auto; white-space:pre-wrap; font-size:14px;}
+        .t {color:#888;}
+        .s {color:#0f0;}
+        .e {color:#ff0; font-weight:bold;}
+        .d {color:#0ff;}
+        .err {color:#f00; font-weight:bold;}
+    </style>
+</head>
+<body>
+    <h1>Socket.IO 实时调试面板</h1>
+    <div>服务器: <span id="server">加载中...</span></div>
+    <div>状态: <span id="status">初始化中...</span></div>
+    <div>你的ID: <span id="myid">生成中...</span></div>
+    <div id="log">正在加载 socket.io 客户端...</div>
+
+    <!-- 终极三保险 CDN（任一一个能连上就行） -->
+    <script>
+        // 生成持久化调试ID
+        const myId = localStorage.getItem('debug_uuid') || 'ya_jun_' + Math.random().toString(36).substr(2,9);
+        localStorage.setItem('debug_uuid', myId);
+        document.getElementById('myid').textContent = myId;
+
+        const serverUrl = window.location.protocol + '//' + window.location.host;
+        document.getElementById('server').textContent = serverUrl;
+
+        function log(msg, type='info') {
+            const div = document.getElementById('log');
+            const line = document.createElement('div');
+            const time = new Date().toLocaleTimeString('ja-JP', {hour12:false});
+            line.innerHTML = `<span class="t">[${time}]</span> <span class="${type}">${msg}</span>`;
+            div.appendChild(line);
+            div.scrollTop = div.scrollHeight;
+            console.log('[DEBUG]', msg);
+        }
+
+        // 三重保险加载 socket.io（必中一个）
+        const cdns = [
+            '../socket.io.min.js',           // 官方（有时被墙）
+            'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js',  // Cloudflare
+            'https://lf26-cdn-tos.bytecdntp.com/cdn/socket.io/4.7.5/socketio.min.js',   // 字节跳动加速（国内最快）
+        ];
+
+        let loaded = false;
+        function loadNext(index = 0) {
+            if (loaded || index >= cdns.length) {
+                if (!loaded) log('所有 CDN 都失败了，尝试本地 fallback...', 'err');
+                loadLocalFallback();
+                return;
+            }
+
+            log(`尝试加载 socket.io 第 ${index+1} 个源...`);
+            const script = document.createElement('script');
+            script.src = cdns[index];
+            script.onload = () => {
+                if (loaded) return;
+                loaded = true;
+                log('socket.io 客户端加载成功！开始连接服务器', 's');
+                startSocketIO();
+            };
+            script.onerror = () => {
+                log(`第 ${index+1} 个源加载失败，切换下一个...`, 'err');
+                loadNext(index + 1);
+            };
+            document.head.appendChild(script);
+        }
+
+        // 本地 fallback（把 socket.io.min.js 放在 static 下即可，永不失联）
+        function loadLocalFallback() {
+            const script = document.createElement('script');
+            script.src = '/static/socket.io.min.js';  // ← 你只需要把官方文件放这里就行
+            script.onload = () => {
+                log('本地 socket.io 加载成功！', 's');
+                startSocketIO();
+            };
+            script.onerror = () => log('本地文件也找不到…你真的太倒霉了', 'err');
+            document.head.appendChild(script);
+        }
+
+        function startSocketIO() {
+            document.getElementById('status').textContent = '连接中...';
+            const socket = io(serverUrl, {
+                query: { id: myId },
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionAttempts: 10,
+                timeout: 10000
+            });
+
+            socket.on('connect', () => {
+                document.getElementById('status').innerHTML = '已连接 (WebSocket)';
+                document.getElementById('status').style.color = '#0f0';
+                log('连接成功！已加入 sync 频道，实时数据即将到来', 's');
+            });
+
+            socket.on('connect_error', (err) => {
+                document.getElementById('status').textContent = '连接失败';
+                document.getElementById('status').style.color = '#f00';
+                log(`连接错误: ${err.message}`, 'err');
+            });
+
+            socket.on('disconnect', (reason) => {
+                document.getElementById('status').textContent = `断开 (${reason})`;
+                log(`断开: ${reason}`, 'err');
+            });
+
+            socket.on('sync', (data) => {
+                log('收到 sync 数据包', 'e');
+                console.log('完整数据 →', data);
+                if (!data.playing) {
+                    log('状态: 已停止', 'd');
+                } else {
+                    log(`进度: ${data.current_time?.toFixed(2)} / ${data.total_time?.toFixed(2)} (${data.progress?.toFixed(1)}%)`, 'd');
+                    log(`歌词: ${data.current_lyrics || '（无）'}`, 'd');
+                }
+                log(`在线: ${data.online_users} 人 | Token: ${data.refresh_token?.substr(0,12)}...`, 'd');
+                log('─'.repeat(60), 'd');
+            });
+
+            socket.onAny((event, ...args) => {
+                if (event !== 'sync') log(`其他事件 → ${event}`, 'e');
+            });
+        }
+
+        // 开始加载
+        loadNext(0);
+    </script>
+</body>
+</html>

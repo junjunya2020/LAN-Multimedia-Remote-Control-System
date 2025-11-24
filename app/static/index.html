@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+    <title>浏览器检测重定向</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .loading {
+            font-size: 14px;
+            color: #333;
+        }
+        a {
+            color: #0000ff;
+            text-decoration: underline;
+        }
+        a:hover {
+            color: #0000aa;
+        }
+    </style>
+    <script type="text/javascript">
+        // 最基础的UA检测函数，兼容IE6
+        function detectBrowser() {
+            var ua = navigator.userAgent;
+            var isIE6 = false;
+
+            // 简单直接的UA检测
+            if (ua.indexOf('MSIE 6') != -1) {
+                isIE6 = true;
+            }
+
+            // 执行跳转
+            if (isIE6) {
+                window.location = 'ie/index.html';
+            } else {
+                window.location = 'default/index.html';
+            }
+        }
+
+        // 立即执行，不等待onload
+        detectBrowser();
+    </script>
+</head>
+<body>
+    <div class="loading">正在检测浏览器...</div>
+
+    <!-- 直接显示备用链接，不需要noscript -->
+    <div style="margin-top: 30px;">
+        <p>如果浏览器未自动跳转，请手动选择：</p>
+        <p>
+            <a href="default/index.html">标准版本</a> |
+            <a href="ie/index.html">IE兼容版本</a>
+        </p>
+    </div>
+</body>
+</html>

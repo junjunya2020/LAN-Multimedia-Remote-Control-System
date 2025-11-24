@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音樂播放器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+
+<body>
+    <h1>音樂播放器</h1>
+ <!--    <div class="live-container">
+        <div class="live-header">
+            <h3>試試觀看直播</h3>
+            <button id="fullscreenBtn" class="fullscreen-btn" onclick="toggleFullscreen()" title="全螢幕觀看">⛶</button>
+        </div>
+        <div class="live-iframe-container">
+            <iframe id="liveImg" src="http://10.233.0.75:8080" alt="直播" class="live-iframe"></iframe>
+        </div>
+    </div>
+    -->
+    <div class="content-wrapper">
+        <!-- 左侧播放器区域 -->
+        <div class="player-container">
+                <!-- 音频信息区域 - 专辑图片在左侧 -->
+                <div id="audio-info">
+                    <!-- 專輯封面 -->
+                    <img
+                        id="album-image"
+                        src=""
+                        alt="專輯封面"
+                    >
+                    <!-- 音頻元數據顯示區域 -->
+                    <div id="metadata-display">
+                        <h2 id="track-title">未選擇曲目</h2>
+                        <p id="track-artist"></p>
+                        <p id="track-album"></p>
+                    </div>
+                </div>
+
+                <!-- 进度条 -->
+                <div class="progress-container">
+                    <div class="progress-bar" onclick="seekToPosition(event)">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">00:00</span>
+                        <span id="total-time">00:00</span>
+                    </div>
+                </div>
+
+                <!-- 播放控制按鈕 -->
+                <div id="controls">
+                    <button id="prevButton" onclick="prevTrack()">⏮️</button>
+                    <button id="playPauseButton" onclick="togglePlayPause()">▶️</button>
+                    <button onclick="stop()">⏹️</button>
+                    <button id="nextButton" onclick="nextTrack()">⏭️</button>
+                    <button id="playModeButton" onclick="togglePlayMode()" title="播放模式">🔁</button>
+                    <button id="fileManagerBtn" onclick="openFileManager()" title="開啟檔案管理員">📁</button>
+                    <button id="searchLyricsBtn" onclick="searchLyrics()" title="搜尋歌詞">🔍</button>
+                    <button id="restartButton" onclick="restartPlayer()" title="重新啟動播放器">🔄</button>
+                </div>
+                
+                <!-- 播放來源設定 -->
+                <div class="play-source-container">
+                    <div class="play-source-label">
+                        <span>🎵 播放來源</span>
+                    </div>
+                    <div class="play-source-controls">
+                        <label>
+                            <input type="radio" name="play_source" value="1" id="play_source_playlist" onchange="updatePlaySource(1)">
+                            <span>播放清單</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="play_source" value="2" id="play_source_directory" onchange="updatePlaySource(2)">
+                            <span>磁碟路徑</span>
+                        </label>
+                    </div>
+                    <div class="play-source-hint" id="play-source-hint">
+                        <small>切換播放來源將影響下一曲等操作的播放源</small>
+                    </div>
+                </div>
+                
+                <!-- 音量控制條 -->
+                <div class="volume-container">
+                    <div class="volume-label">
+                        <span>🔊 音量</span>
+                        <span id="volume-value">50%</span>
+                    </div>
+                    <div class="volume-bar" onclick="setVolumeFromClick(event)">
+                        <div class="volume-fill" id="volume-fill" style="width: 50%;"></div>
+                    </div>
+                </div>
+                
+                <!-- 歌詞顯示區域 -->
+                <div id="lyrics-container">
+                    <div class="lyrics-header">
+                        <h3>當前歌詞</h3>
+                        <div class="lyrics-actions">
+                            <button id="view-full-lyrics" onclick="viewFullLyrics()">查看全部歌詞</button>
+                            <button id="toggle-traditional" class="toggle-traditional" onclick="toggleTraditionalChinese()" title="簡繁轉換">繁</button>
+                        </div>
+                    </div>
+                    <div id="current-lyrics" class="lyrics-display">暫無歌詞</div>
+                </div>
+
+                <!-- 播放清單區域 -->
+                <div id="playlist-container">
+                    <div class="playlist-header">
+                        <h3>播放清單</h3>
+                        <div class="playlist-actions">
+                            <button onclick="addDouyinAudio()" title="新增抖音音頻">📱</button>
+                            <button onclick="refreshPlaylist()" title="重新整理播放清單">🔄</button>
+                            <button onclick="clearPlaylist()" title="清空播放清單">🗑️</button>
+                        </div>
+                    </div>
+                    <div id="playlist-items" class="playlist-items">
+                        <div class="empty-playlist">播放清單為空，請新增音樂檔案</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- 新增：啟用 Socket.IO 勾選框 -->
+    <div style="position: fixed; bottom: 20px; right: 20px; background: #333; padding: 10px; border-radius: 5px; color: white;">
+        <label for="enableSocket">啟用 Socket.IO 即時同步</label>
+        <input type="checkbox" id="enableSocket">
+    </div>
+
+    <script src="../socket.io.min.js"></script> <!-- Socket.IO CDN -->
+    <script src="./console.js"></script>
+    <script src="./tools.js"></script>
+    <script src="./syncBroadcast.js"></script>
+    <script src="./player.js"></script>
+    <script src="./socketio.js"></script>
+    <script src="./progress.js"></script>
+    <script src="./Volume.js"></script>
+    <script src="./Playlist.js"></script>
+    <script src="./PlaySource.js"></script>
+    <script src="./opencc.js"></script> <!-- OpenCC 简繁转换库 -->
+    <script src="./script.js"></script>
+
+    <script>
+        // 全屏功能
+        function toggleFullscreen() {
+            const iframe = document.getElementById('liveImg');
+            const container = document.querySelector('.live-container');
+            
+            if (!document.fullscreenElement) {
+                // 进入全屏
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                // 退出全屏
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // 监听全屏状态变化
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            if (document.fullscreenElement) {
+                fullscreenBtn.textContent = '⛶';
+                fullscreenBtn.title = '退出全螢幕';
+            } else {
+                fullscreenBtn.textContent = '⛶';
+                fullscreenBtn.title = '全螢幕觀看';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

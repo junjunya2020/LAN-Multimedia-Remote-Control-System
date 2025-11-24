@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索歌词 - 网易云音乐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .current-song {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .current-song h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .results-section {
+            padding: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .song-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .song-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .song-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .song-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .song-artist {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .song-album {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .lyrics-preview {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .lyrics-preview h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .lyrics-content {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .save-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(78, 205, 196, 0.3);
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #d63031;
+        }
+
+        .success-message {
+            background: #e6ffe6;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #00b894;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 搜索歌词</h1>
+            <p>从网易云音乐搜索并下载歌词</p>
+        </div>
+
+        <div class="search-section">
+            <div class="current-song">
+                <h3>当前播放歌曲</h3>
+                <p id="current-song-name">正在加载...</p>
+            </div>
+
+            <div class="search-form">
+                <input type="text" 
+                       id="search-input" 
+                       class="search-input" 
+                       placeholder="输入歌曲名称搜索歌词..."
+                       autocomplete="off">
+                <button type="button" id="search-btn" class="search-btn">搜索</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <h2>搜索结果</h2>
+                <span id="results-count">0 首歌曲</span>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>正在搜索歌词...</p>
+            </div>
+
+            <div id="error-message" class="error-message" style="display: none;"></div>
+
+            <div id="song-list" class="song-list">
+                <div class="loading">
+                    <p>请输入歌曲名称并点击搜索</p>
+                </div>
+            </div>
+
+            <div id="lyrics-preview" class="lyrics-preview" style="display: none;">
+                <h3>歌词预览</h3>
+                <div id="lyrics-content" class="lyrics-content"></div>
+                <div class="action-buttons">
+                    <button id="save-lyrics-btn" class="save-btn">保存歌词</button>
+                    <a href="default/index.html" class="back-btn">返回播放器</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="success-message" class="success-message" style="display: none;"></div>
+
+        <div class="footer">
+            <p>网易云音乐歌词搜索工具</p>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentSongName = '';
+        let selectedSongId = null;
+        let selectedTempId = null;
+        let currentFile = '';
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从URL参数获取当前播放的歌曲名称
+            const urlParams = new URLSearchParams(window.location.search);
+            currentSongName = urlParams.get('song') || '';
+            currentFile = urlParams.get('file') || '';
+            
+            // 预填充搜索框
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = currentSongName;
+            
+            // 更新当前歌曲显示
+            const currentSongElement = document.getElementById('current-song-name');
+            if (currentSongName) {
+                currentSongElement.textContent = currentSongName;
+            } else {
+                currentSongElement.textContent = '未获取到当前播放歌曲';
+            }
+
+            // 绑定搜索按钮事件
+            document.getElementById('search-btn').addEventListener('click', searchLyrics);
+            
+            // 绑定保存歌词按钮事件
+            document.getElementById('save-lyrics-btn').addEventListener('click', saveLyrics);
+            
+            // 绑定回车键搜索
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchLyrics();
+                }
+            });
+        });
+
+        // 搜索歌词函数
+        async function searchLyrics() {
+            const keyword = document.getElementById('search-input').value.trim();
+            
+            if (!keyword) {
+                showError('请输入搜索关键词');
+                return;
+            }
+
+            // 显示加载状态
+            showLoading(true);
+            hideError();
+            hideLyricsPreview();
+
+            try {
+                const response = await fetch(`/api/netease/search_lyrics?keyword=${encodeURIComponent(keyword)}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    displaySearchResults(result.data);
+                } else {
+                    showError(result.message || '搜索失败');
+                }
+            } catch (error) {
+                showError('网络错误：' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示搜索结果
+        function displaySearchResults(songs) {
+            const songList = document.getElementById('song-list');
+            const resultsCount = document.getElementById('results-count');
+            
+            resultsCount.textContent = `${songs.length} 首歌曲`;
+            
+            if (songs.length === 0) {
+                songList.innerHTML = '<div class="loading"><p>未找到相关歌曲</p></div>';
+                return;
+            }
+
+            songList.innerHTML = songs.map(song => {
+                // 安全处理字符串，防止XSS和语法错误
+                const songName = (song.song_name || song.name || '未知歌曲').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const artist = (song.artists || song.artist || '未知歌手').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const album = (song.album || '未知专辑').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const songId = song.song_id || song.id || 0;
+                
+                return `
+                    <div class="song-item" onclick="selectSong(${songId}, '${songName}', '${artist}')">
+                        <div class="song-title">${song.song_name || song.name || '未知歌曲'}</div>
+                        <div class="song-artist">歌手：${song.artists || song.artist || '未知歌手'}</div>
+                        <div class="song-album">专辑：${song.album || '未知专辑'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 选择歌曲
+        async function selectSong(songId, songName, artist) {
+            selectedSongId = songId;
+            
+            // 显示加载状态
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/netease/select_lyrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        song_id: songId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    selectedTempId = result.data.temp_id;
+                    displayLyricsPreview(result.data.lyric, result.data.translate, songName, artist);
+                } else {
+                    showError(result.message || '获取歌词失败');
+                }
+            } catch (error) {
+                showError('网络错误：' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示歌词预览
+        function displayLyricsPreview(lyric, translate, songName, artist) {
+            const lyricsContent = document.getElementById('lyrics-content');
+            const lyricsPreview = document.getElementById('lyrics-preview');
+            
+            let lyricsHtml = `<strong>${songName} - ${artist}</strong>\n\n`;
+            lyricsHtml += lyric || '暂无歌词';
+            
+            if (translate) {
+                lyricsHtml += '\n\n--- 翻译 ---\n';
+                lyricsHtml += translate;
+            }
+            
+            lyricsContent.textContent = lyricsHtml;
+            lyricsPreview.style.display = 'block';
+            
+            // 滚动到歌词预览区域
+            lyricsPreview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 保存歌词
+        async function saveLyrics() {
+            if (!selectedTempId || !currentFile) {
+                showError('缺少必要参数，无法保存歌词');
+                return;
+            }
+
+            // 显示加载状态
+            const saveBtn = document.getElementById('save-lyrics-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '保存中...';
+            saveBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/netease/save_lyrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        temp_id: selectedTempId,
+                        file_path: currentFile
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showSuccess('歌词保存成功！3秒后自动关闭页面...');
+                    
+                    // 3秒后自动关闭页面
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+                } else {
+                    showError(result.message || '保存歌词失败');
+                }
+            } catch (error) {
+                showError('网络错误：' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        // 工具函数
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('search-btn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 3000);
+        }
+
+        function hideLyricsPreview() {
+            document.getElementById('lyrics-preview').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+    <title>音乐播放器 - IE兼容版本（支持在线UUID）</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script type="text/javascript" src="script.js"></script>
+</head>
+<body>
+    <h1>音乐播放器IE6</h1>
+
+    <div class="player">
+        <div class="album">
+            <img src="/album_cover?t=0" width="300" height="300" alt="专辑封面" />
+        </div>
+
+        <div class="buttons">
+            <button onclick="delayedAction('api/prev')">上一曲</button>
+            <button id="playPauseButton" onclick="togglePlayPause()">播放</button>
+            <button onclick="delayedAction('api/stop')">停止</button>
+            <button onclick="delayedAction('api/next')">下一曲</button>
+        </div>
+
+        <div class="info" id="songInfo">
+            <div id="title">歌曲标题</div>
+            <div id="artist">艺术家</div>
+            <div id="album">专辑</div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-time" id="timeDisplay">0:00 / 0:00</div>
+        </div>
+
+        <!-- 新增：显示当前UUID和在线人数 -->
+        <div style="margin-top:15px;font-size:12px;">
+            你的ID: <span id="myId" style="color:#d00;font-weight:bold;">加载中...</span><br/>
+            当前在线: <span id="onlineCount" class="online" onclick="showOnlineUsers()" style="cursor:pointer;cursor:hand;">0</span> 人（点击查看详情）
+        </div>
+        
+        <!-- 新增：歌词显示区域 -->
+        <div style="margin-top:20px;padding:10px;background:#f0f0f0;border:1px solid #ccc;">
+            <div style="font-weight:bold;margin-bottom:5px;">当前歌词：</div>
+            <div id="current-lyrics" style="min-height:30px;line-height:1.5;">暂无歌词</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><a href="../default/index.html">切换到标准版本</a></p>
+    </div>
+
+    <!-- 所有JS代码已移至script.js -->
+</body>
+</html>
