@@ -1,10 +1,12 @@
-# AudioSphere Control - 局域网多媒体远程控制系统
+# AudioSphere Control - 全能媒体解析与远程控制系统
 
 [中文](README.md) | [English](README_EN.md)
 
 ## 🎵 项目简介
 
-AudioSphere Control 是一个基于 Python 的现代化局域网多媒体远程控制系统，支持音频/视频播放、文件管理、实时同步控制等功能。通过 Web 界面和 Socket.IO 实时通信，实现跨设备的便捷媒体播放体验。
+AudioSphere Control 是一个基于 Python 的现代化全能媒体解析与远程控制系统，支持**抖音、Bilibili 等主流平台视频解析**，以及音频/视频播放、文件管理、实时同步控制等功能。通过 Web 界面和 Socket.IO 实时通信，实现**一键解析、全能控制**的便捷媒体播放体验。
+
+**🎯 核心亮点：单个程序，全能解析，一键控制！**
 
 ## ✨ 核心特性
 
@@ -25,11 +27,17 @@ AudioSphere Control 是一个基于 Python 的现代化局域网多媒体远程�
 - **Socket.IO 通信**：低延迟的实时数据传输
 - **播放状态同步**：所有设备保持一致的播放状态
 
-### 🎯 高级功能
+### 🎯 全能解析功能
+- **抖音视频解析**：支持抖音视频链接一键解析和播放
+- **Bilibili视频解析**：支持Bilibili视频URL/BV号一键解析和播放
+- **智能识别**：自动识别URL格式，无需手动区分平台
+- **异步下载**：后台异步下载，不影响其他操作
+- **更多平台支持**：后续将持续添加更多主流平台解析API
+
+### 🔧 高级功能
 - **断点续播**：自动记录播放位置，下次启动时继续播放
 - **歌词显示**：支持网易云音乐歌词搜索和显示
 - **专辑封面**：自动提取和显示音频文件元数据
-- **抖音视频解析**：支持抖音视频链接解析和播放
 - **多语言界面**：支持简体中文和繁体中文切换
 
 ## 🏗️ 技术架构
@@ -58,7 +66,7 @@ AudioSphere Control 是一个基于 Python 的现代化局域网多媒体远程�
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/your-username/audioshpere-control.git
+git clone https://github.com/junjunya2020/LAN-Multimedia-Remote-Control-System
 cd audioshpere-control
 ```
 
@@ -87,6 +95,22 @@ python run.py
 打开浏览器访问：`http://localhost:5000`
 
 ## 📱 使用指南
+
+### 🎯 全能解析功能使用
+
+#### 抖音视频解析
+1. **点击抖音按钮**：在播放列表区域点击📱按钮
+2. **输入抖音URL**：在弹出的输入框中粘贴抖音视频链接
+3. **一键解析**：系统自动解析、下载并添加到播放列表
+
+#### Bilibili视频解析
+1. **点击Bilibili按钮**：在播放列表区域点击📺按钮
+2. **输入URL或BV号**：支持Bilibili视频URL或BV号输入
+   - URL格式：`https://www.bilibili.com/video/BV1nqyMBKEqv/`
+   - BV号格式：`BV1nqyMBKEqv`
+3. **智能识别**：系统自动识别格式并完成解析下载
+
+**💡 核心优势：单个程序，全能解析，一键控制！**
 
 ### 基本操作
 1. **文件选择**：点击"选择文件"按钮浏览本地文件
