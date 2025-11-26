@@ -36,6 +36,8 @@
                         <h2 id="track-title">未選擇曲目</h2>
                         <p id="track-artist"></p>
                         <p id="track-album"></p>
+                        <p id="track-bitrate"></p>
+                        <p id="track-file-path"></p>
                     </div>
                 </div>
 
@@ -59,6 +61,7 @@
                     <button id="playModeButton" onclick="togglePlayMode()" title="播放模式">🔁</button>
                     <button id="fileManagerBtn" onclick="openFileManager()" title="開啟檔案管理員">📁</button>
                     <button id="searchLyricsBtn" onclick="searchLyrics()" title="搜尋歌詞">🔍</button>
+                    <button id="historyBtn" onclick="openPlaybackHistory()" title="查看播放歷史">📜</button>
                     <button id="restartButton" onclick="restartPlayer()" title="重新啟動播放器">🔄</button>
                 </div>
                 
@@ -79,6 +82,24 @@
                     </div>
                     <div class="play-source-hint" id="play-source-hint">
                         <small>切換播放來源將影響下一曲等操作的播放源</small>
+                    </div>
+                </div>
+                
+                <!-- 音軌選擇 -->
+                <div class="audio-track-container">
+                    <div class="audio-track-label">
+                        <span>🎛️ 音軌選擇</span>
+                    </div>
+                    <div class="audio-track-controls">
+                        <select id="audioTrackSelect" onchange="changeAudioTrack()" title="選擇音軌">
+                            <option value="0">正常播放</option>
+                            <option value="1">人聲</option>
+                            <option value="2">伴奏</option>
+                        </select>
+                        <button id="aiSeparateBtn" onclick="aiSeparateAudio()" title="使用AI分離音頻" style="margin-left: 10px;">🤖 AI分離</button>
+                    </div>
+                    <div class="audio-track-hint" id="audio-track-hint">
+                        <small>可切換音樂的人聲、伴奏等不同音軌</small>
                     </div>
                 </div>
                 
@@ -143,6 +164,7 @@
     <script src="./Volume.js"></script>
     <script src="./Playlist.js"></script>
     <script src="./PlaySource.js"></script>
+    <script src="./AudioTrack.js"></script>
     <script src="./opencc.js"></script> <!-- OpenCC 简繁转换库 -->
     <script src="./script.js"></script>
 

@@ -157,7 +157,12 @@ h2, h3 {
     font-size: 1.1em;
     word-wrap: break-word;
 }
-
+#track-bitrate, #track-file-path {
+    color: #7f8c8d;
+    margin: 5px 0;
+    font-size: 0.8em;
+    word-wrap: break-word;
+}
 /* 进度条样式 */
 .progress-container {
     width: 100%;
@@ -618,6 +623,92 @@ hr {
     
     .volume-bar {
         height: 6px;
+    }
+}
+
+/* 音轨选择器样式 */
+.audio-track-container {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.audio-track-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #34495e;
+    font-weight: 500;
+}
+
+.audio-track-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.audio-track-controls select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    background: white;
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.audio-track-controls select:hover {
+    border-color: #3498db;
+    background-color: #f8f9fa;
+}
+
+.audio-track-controls select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.audio-track-controls select option {
+    padding: 8px;
+    color: #2c3e50;
+    background: white;
+}
+
+.audio-track-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #7f8c8d;
+    line-height: 1.4;
+}
+
+/* 响应式调整音轨选择器 */
+@media (max-width: 768px) {
+    .audio-track-container {
+        padding: 10px;
+        margin: 15px 0;
+    }
+    
+    .audio-track-label {
+        font-size: 12px;
+    }
+    
+    .audio-track-controls select {
+        padding: 10px;
+        font-size: 13px;
     }
 }
 
@@ -1186,5 +1277,87 @@ hr {
     
     .live-header h3 {
         font-size: 1.1em;
+    }
+}
+
+/* AI分离音频按钮样式 */
+#aiSeparateBtn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3);
+    white-space: nowrap;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+#aiSeparateBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7d3c98, #8e44ad);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4);
+}
+
+#aiSeparateBtn:active {
+    transform: translateY(0);
+}
+
+#aiSeparateBtn:disabled {
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 4px rgba(189, 195, 199, 0.3);
+    opacity: 0.8;
+}
+
+/* 处理中的动画效果 */
+#aiSeparateBtn:disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    #aiSeparateBtn {
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-left: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .audio-track-controls {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    #aiSeparateBtn {
+        margin-left: 0;
+        width: 100%;
     }
 }

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>播放歷史記錄</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .history-container {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .history-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .history-count {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .history-list {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            color: #333;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .history-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-item.current {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .history-item-info {
+            flex: 1;
+        }
+        
+        .history-item-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .history-item-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .history-item-play {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        
+        .history-item-play:hover {
+            background: #5a6fd8;
+        }
+        
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #218838;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        /* 滚动条样式 */
+        .history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .history-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .history-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .history-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <div class="history-header">
+            <div>
+                <h1 class="history-title">播放歷史記錄</h1>
+                <div class="history-count" id="historyCount">正在載入...</div>
+            </div>
+            <div>
+                <button class="refresh-btn" onclick="loadPlaybackHistory()">🔄 刷新</button>
+                <button class="close-btn" onclick="window.close()">✕ 關閉</button>
+            </div>
+        </div>
+        
+        <div class="history-list" id="historyList">
+            <div class="loading">正在載入歷史記錄...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentHistory = [];
+        
+        // 載入播放歷史記錄
+        async function loadPlaybackHistory() {
+            try {
+                const response = await fetch('/api/playback_history');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    currentHistory = result.playback_history || [];
+                    displayHistory(currentHistory);
+                } else {
+                    throw new Error(result.message || '獲取歷史記錄失敗');
+                }
+            } catch (error) {
+                console.error('載入歷史記錄失敗:', error);
+                document.getElementById('historyList').innerHTML = 
+                    `<div class="empty-history">載入失敗: ${error.message}</div>`;
+            }
+        }
+        
+        // 顯示歷史記錄
+        function displayHistory(history) {
+            const historyList = document.getElementById('historyList');
+            const historyCount = document.getElementById('historyCount');
+            
+            historyCount.textContent = `共 ${history.length} 條記錄`;
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">暫無播放歷史記錄</div>';
+                return;
+            }
+            
+            let html = '';
+            history.forEach((item, index) => {
+                // 處理兩種數據結構：字符串路徑或對象
+                let path, title, artist, album, playTime, isCurrent;
+                
+                if (typeof item === 'string') {
+                    // 直接是文件路徑字符串
+                    path = item;
+                    title = '';
+                    artist = '';
+                    album = '';
+                    playTime = '';
+                    isCurrent = false;
+                } else {
+                    // 對象結構
+                    path = item.path || item;
+                    title = item.title || item.name || '';
+                    artist = item.artist || '';
+                    album = item.album || '';
+                    playTime = item.play_time ? new Date(item.play_time).toLocaleString() : '';
+                    isCurrent = item.is_current || false;
+                }
+                
+                // 從文件路徑提取檔案名作為標題
+                let displayTitle;
+                if (title && title.trim() !== '' && !title.includes('未知') && title !== 'Unknown Title') {
+                    displayTitle = title;
+                } else if (path) {
+                    // 從檔案路徑提取檔案名
+                    displayTitle = path.split('/').pop().split('\\').pop();
+                } else {
+                    displayTitle = '未知檔案';
+                }
+                
+                html += `
+                    <div class="history-item ${isCurrent ? 'current' : ''}" onclick="playHistoryItem(${index})">
+                        <div class="history-item-info">
+                            <div class="history-item-title">${displayTitle}</div>
+                            <div class="history-item-meta">
+                                ${artist ? `歌手: ${artist} | ` : ''}${album ? `專輯: ${album} | ` : ''}${playTime ? `播放時間: ${playTime}` : ''}
+                            </div>
+                        </div>
+                        <button class="history-item-play" onclick="event.stopPropagation(); playHistoryItem(${index})">
+                            ▶️ 播放
+                        </button>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+        
+        // 播放歷史記錄中的項目
+        async function playHistoryItem(index) {
+            try {
+                const item = currentHistory[index];
+                
+                // 處理兩種數據結構：字符串路徑或對象
+                let filePath;
+                if (typeof item === 'string') {
+                    filePath = item; // 直接是文件路徑字符串
+                } else {
+                    filePath = item.path || item; // 對象結構
+                }
+                
+                if (!filePath) {
+                    alert('無法播放此項目：缺少檔案路徑');
+                    return;
+                }
+                
+                console.log('播放文件路徑:', filePath);
+                
+                // 調用父視窗的播放函數（如果存在）
+                // 直接調用 API
+                const response = await fetch(`/api/set_file?file=${encodeURIComponent(filePath)}`);
+                const result = await response.json();
+                
+                if (result.status === 'loaded') {
+                    setTimeout(() => window.close(), 3000);
+                } else {
+                    alert('播放失敗: ' + result.message);
+                }
+            } catch (error) {
+                console.error('播放歷史項目失敗:', error);
+                alert('播放失敗: ' + error.message);
+            }
+        }
+        
+        // 頁面載入時自動載入歷史記錄
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlaybackHistory();
+            
+            // 每30秒自動刷新一次
+            setInterval(loadPlaybackHistory, 30000);
+        });
+        
+        // 快捷鍵支援
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.close();
+            } else if (e.key === 'F5') {
+                e.preventDefault();
+                loadPlaybackHistory();
+            }
+        });
+    </script>
+</body>
+</html>

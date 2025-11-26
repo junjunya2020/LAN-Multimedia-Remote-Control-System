@@ -22,10 +22,15 @@ from .player import (
     SearchView, SetIndexView,
     # 重启路由
     RestartView,
+    # 播放历史记录路由
+    PlaybackHistoryView,
+    # 切换音频轨道路由
+    SetAudioTrackView,
+    # AI音频分离路由
+    AIseparatesaudioView,
 )
 from .crawlers.douyin import AddPlayPistDouyinView
 from .crawlers.Netease import SearchLyricsView, SelectLyricsView, SaveLyricsView
-from .crawlers.bilibili import AddPlayListBilibiliView
 # ================== 统一注册路由 ==================
 def _register_routes():
     player_bp.add_url_rule("/", view_func=IndexView.as_view('index'))
@@ -72,13 +77,16 @@ def _register_routes():
     player_bp.add_url_rule("/api/set_index", view_func=SetIndexView.as_view('set_index'))
     # 重启路由
     player_bp.add_url_rule("/api/restart", view_func=RestartView.as_view('restart'))
+    # 播放历史记录路由
+    player_bp.add_url_rule("/api/playback_history", view_func=PlaybackHistoryView.as_view('playback_history'))
     # 网易云歌词路由
     player_bp.add_url_rule("/api/netease/search_lyrics", view_func=SearchLyricsView.as_view('netease_search_lyrics'))
     player_bp.add_url_rule("/api/netease/select_lyrics", view_func=SelectLyricsView.as_view('netease_select_lyrics'))
     player_bp.add_url_rule("/api/netease/save_lyrics", view_func=SaveLyricsView.as_view('netease_save_lyrics'))
-    # Bilibili 视频路由（简化版）
-    player_bp.add_url_rule("/api/add_play_list_bilibili", view_func=AddPlayListBilibiliView.as_view('add_play_list_bilibili'))
-    # 直播路由
+    # 切换音频轨道路由
+    player_bp.add_url_rule("/api/set_audio_track", view_func=SetAudioTrackView.as_view('set_audio_track'))
+    # AI音频分离路由
+    player_bp.add_url_rule("/api/ai_separate_audio", view_func=AIseparatesaudioView.as_view('ai_separate_audio'))
 _register_routes()
 
 __all__ = ['player_bp']

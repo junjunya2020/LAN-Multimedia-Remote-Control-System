@@ -9,25 +9,25 @@ echo ============================================
 echo Audio Remote Control System Startup Script
 echo ============================================
 
-REM Check if virtual environment directory exists
-if not exist ".venv" (
-    echo ERROR: Virtual environment directory .venv does not exist
-    echo Please create virtual environment: python -m venv .venv
+REM Check if conda environment directory exists
+if not exist "conda_env" (
+    echo ERROR: Conda environment directory conda_env does not exist
+    echo Please create conda environment first
     pause
     exit /b 1
 )
 
-REM Activate virtual environment
-echo Activating virtual environment...
-call .venv\Scripts\activate.bat
+REM Activate conda environment
+echo Activating conda environment...
+call conda activate .\conda_env
 
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Virtual environment activation failed
+    echo ERROR: Conda environment activation failed
     pause
     exit /b 1
 )
 
-echo Virtual environment activated successfully
+echo Conda environment activated successfully
 
 REM Check if dependencies are installed
 echo Checking dependency installation status...

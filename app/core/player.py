@@ -11,7 +11,7 @@ import eyed3
 import vlc
 from enum import Enum
 from typing import Optional, List, Dict, Union
-
+from tinytag import TinyTag
 
 class Settings:
     """
@@ -226,7 +226,11 @@ class PlayerManager:
         self.ONLINE_TIMEOUT = 10
         self.played_files = []  # 已播放文件列表
         self.file_index = -1  # 当前文件索引
-        
+        self.artist = ""  # 当前文件艺术家
+        self.album = ""  # 当前文件专辑
+        self.title = ""  # 当前文件标题
+        self.duration = 0.0  # 当前文件时长
+        self.bitrate = 0  # 当前文件码率
         # 播放列表相关
         self.playlist = []  # 播放列表数据结构
         self.playlist_lock = threading.Lock()  # 播放列表线程锁
@@ -237,10 +241,11 @@ class PlayerManager:
         self.other_event_broadcast = ""
         # 设置VLC事件监听器（自动播放检测）
         self._setup_vlc_event_manager()
-        
+        self.audio_track=0#0为正常播放1为人声2为伴奏
         # 注册信号处理器（程序退出时的清理工作）
         self._register_signal_handlers()
-        
+        self.Vocal=vlc.MediaPlayer()
+        self.Instrumental=vlc.MediaPlayer()
         # 同步到类属性（向下兼容）
         PlayerManager.player = self.player
         PlayerManager.current_file = self.current_file
@@ -330,6 +335,65 @@ class PlayerManager:
         """
         return self.other_event_broadcast
     
+    def get_AudioMetadata(self) -> dict:
+        """
+        获取当前播放文件的音频元数据
+        """
+        try:
+            tag = TinyTag.get(self.current_file)
+            self.artist = tag.artist if tag.artist else ""
+            self.album = tag.album if tag.album else ""
+            self.title = tag.title if tag.title else ""
+            self.duration = tag.duration if tag.duration else 0.0
+            self.bitrate = tag.bitrate if tag.bitrate else 0
+        except Exception as e:
+            player_logger.error(f"获取音频元数据失败: {e}")
+            return False
+        return True
+
+    def switch_audio_track(self, track: int = 0):
+        """
+        切换音频轨道
+        Args:
+            track: 音频轨道索引，0为正常播放，1为人声，2为伴奏
+        """
+
+        position=self.player.get_time()  # 转换为秒
+        Instrumental_path = self.current_file.replace(".mp3", "_Instrumental.mp3")
+        Vocal_path = self.current_file.replace(".mp3", "_Vocal.mp3")
+        
+        # 检查对应轨道文件是否存在
+        if track == 1 and not os.path.exists(Vocal_path):
+            raise FileNotFoundError("没有人声轨道文件")
+            return {"success": False, "message": "没有人声轨道文件"}
+        if track == 2 and not os.path.exists(Instrumental_path):
+            raise FileNotFoundError("没有伴奏轨道文件")
+            return {"success": False, "message": "没有伴奏轨道文件"}
+
+        
+        if track == 0:
+            self.player.stop()
+            self.audio_track = 0
+            self.player.set_media(vlc.Media(self.current_file))
+            self.player.play()
+            self.player.set_time(position)  # 转换为毫秒
+        elif track == 1:
+            self.player.stop()
+            self.audio_track = 1
+            self.player.set_media(vlc.Media(Vocal_path))
+            self.player.play()
+            self.player.set_time(position)  # 转换为毫秒
+            print(f"切换到人声轨道，当前位置: {position:.2f}秒 当前路径:{Vocal_path}")
+        elif track == 2:
+            self.player.stop()
+            self.audio_track = 2
+            self.player.set_media(vlc.Media(Instrumental_path))
+            self.player.play()
+            self.player.set_time(position)  # 转换为毫秒
+            print(f"切换到伴奏轨道，当前位置: {position:.2f}秒 当前路径:{Instrumental_path}")
+
+
+
     def set_file(self, path: str, position: float = 0.0):
         """
         设置当前播放文件，并自动更新播放记录
@@ -353,7 +417,7 @@ class PlayerManager:
             self.played_files.append(path)
         # 添加到播放历史记录（用于随机播放模式下的上一曲功能）
         self._add_to_playback_history(path)
-        #关键！！！调用vlc设置文件
+        
         self.player.set_media(vlc.Media(self.current_file))
         # 根据popup_window设置决定是否全屏播放
         if self.get_popup_window():
@@ -365,6 +429,16 @@ class PlayerManager:
         PlayerManager.current_file = self.current_file
         PlayerManager.file_index = self.file_index
         PlayerManager.played_files = self.played_files
+        #更新音频元数据
+        self.get_AudioMetadata()
+    def set_position(self, position: float):
+        """
+        设置当前播放位置
+        Args:
+            position: 播放位置（秒）
+        """
+
+        self.player.set_time(int(position * 1000))  # 转换为毫秒
 
     def restore_last_playback(self) -> bool:
         """
@@ -1300,6 +1374,7 @@ class PlayerManager:
             return VlcState(state, name)
 
         return VlcState(0, "NothingSpecial")
+
 
 
 class VlcState:

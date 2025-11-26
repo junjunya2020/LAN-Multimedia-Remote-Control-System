@@ -8,6 +8,37 @@ function openFileManager() {
     window.open('/static/file_manager.html', 'file_manager', 'width=1000,height=700,scrollbars=yes,resizable=yes');
 }
 
+// 打开播放历史记录窗口
+function openPlaybackHistory() {
+    window.open('/static/default/playback_history.html', 'playback_history', 'width=800,height=600,scrollbars=yes,resizable=yes');
+}
+
+// 全局函数：供历史记录窗口调用以设置文件路径
+function setFileByPath(filePath) {
+    // 验证文件路径
+    if (!filePath || typeof filePath !== 'string') {
+        console.error('无效的文件路径');
+        return Promise.reject(new Error('无效的文件路径'));
+    }
+    
+    // 调用set_file API设置当前文件
+    return api(`api/set_file?file_path=${encodeURIComponent(filePath)}`)
+        .then(result => {
+            if (result.success) {
+                currentFile = filePath;
+                show.log(`已选择文件: ${filePath}`);
+                return result;
+            } else {
+                throw new Error(result.message || '设置文件失败');
+            }
+        })
+        .catch(error => {
+            console.error('设置文件失败:', error);
+            show.log(`设置文件失败: ${error.message}`);
+            throw error;
+        });
+}
+
 // 搜索歌词
 function searchLyrics() {
     // 获取当前播放的歌曲信息

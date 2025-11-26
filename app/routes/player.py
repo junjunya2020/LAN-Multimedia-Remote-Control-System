@@ -17,6 +17,7 @@ from app.core.error_handler import PlayerErrorHandler
 from app.core.logging import player_logger
 from app.core.sync_manager import get_sync_manager  # 导入同步管理器
 from app.core.search_file import file_indexer  # 导入搜索索引器单例
+from app.core.UVR5.process import VocalSeparationAsync  # 导入音频分离模块
 # ================== 类视图定义 ==================
 class IndexView(MethodView):
     @PlayerErrorHandler.create_error_handler
@@ -208,6 +209,7 @@ class SetFileView(MethodView):
     @PlayerErrorHandler.create_error_handler
     async def get(self):
         file_path = request.args.get('file')
+
         if not file_path:
             return jsonify({"status": "error", "message": "No file provided"}), 400
 
@@ -216,7 +218,6 @@ class SetFileView(MethodView):
             return jsonify({"status": "error", "message": "File not exists"}), 404
 
         loop = asyncio.get_running_loop()
-
         # === 1. 使用set_file方法设置文件（这会自动更新播放记录）===
         await loop.run_in_executor(None, player_manager.set_file, file_path)
         player_logger.debug(f"[SetFile] 准备加载: {player_manager.current_file}")
@@ -231,7 +232,7 @@ class SetFileView(MethodView):
         return jsonify({
             "status": "loaded",
             "file": player_manager.current_file,
-            "lyrics_loaded": bool(global_lyrics)
+            "lyrics_loaded": bool(global_lyrics),
         }), 200
 class LyricsView(MethodView):
     @PlayerErrorHandler.create_error_handler
@@ -300,16 +301,16 @@ class AudioMetadataView(MethodView):
 
         # 复用你的 extract_album_cover
         cover_data = await loop.run_in_executor(None, player_manager.extract_album_cover, player_manager.current_file)
-        cover_b64 = base64.b64encode(cover_data).decode() if cover_data else None
-
         # 简单获取时长（你原来的逻辑）
         duration = await loop.run_in_executor(None, lambda: player_manager.player.get_length() / 1000)
-
         return jsonify({
             "status": "success",
-            "title": os.path.splitext(os.path.basename(player_manager.current_file))[0],
+            "title": player_manager.title,
             "duration": round(duration, 2),
-            "cover_base64": cover_b64,
+            "artist": player_manager.artist,
+            "album": player_manager.album,
+            "duration": player_manager.duration,
+            "bitrate": player_manager.bitrate,
             "file_path": player_manager.current_file
         }), 200
 class ProgressView(MethodView):
@@ -773,7 +774,7 @@ class RestartView(MethodView):
         返回：重启状态
         """
         player_logger.info("[Restart] 收到重启请求")
-        
+        print("重启请求")
         try:
             # 在重启前异步执行播放器清理工作，设置10秒超时
             player_logger.info("[Restart] 开始异步执行播放器清理工作，超时时间10秒...")
@@ -798,7 +799,7 @@ class RestartView(MethodView):
             project_dir = os.path.dirname(os.path.dirname(project_dir))  # 回到项目根目录
             python_exe = os.path.abspath(sys.executable)
             restart_script = os.path.join(project_dir, "restart_manager.py")
-            
+            print(restart_script)
             player_logger.info(f"[Restart] 项目目录: {project_dir}")
             player_logger.info(f"[Restart] Python路径: {python_exe}")
             player_logger.info(f"[Restart] 重启脚本: {restart_script}")
@@ -828,14 +829,8 @@ class RestartView(MethodView):
                 )
             
             player_logger.info(f"[Restart] 重启管理器已启动，PID: {process.pid}")
+            exit(0)
             
-            # 立即返回响应，不等待重启完成
-            return jsonify({
-                "status": "success",
-                "message": "重启进程已启动",
-                "restart_pid": process.pid,
-                "note": "系统将在后台进行优雅重启，请稍后重新访问服务"
-            }), 200
             
         except Exception as e:
             player_logger.error(f"[Restart] 重启失败: {str(e)}")
@@ -844,11 +839,159 @@ class RestartView(MethodView):
                 "message": f"重启失败: {str(e)}"
             }), 500
 
+class PlaybackHistoryView(MethodView):
     @PlayerErrorHandler.create_error_handler
     async def get(self):
         """
-        获取屏幕直播流
-        路由：/api/GET_LIVE
-        返回：获取屏幕直播流
+        获取播放历史记录
+        路由：/api/playback_history
+        返回：播放历史记录列表
         """
-        return "获取屏幕直播流"
+        try:
+            # 获取播放历史记录
+            playback_history = player_manager.playback_history
+            
+            return jsonify({
+                "status": "success",
+                "playback_history": playback_history,
+                "count": len(playback_history)
+            }), 200
+            
+        except Exception as e:
+            player_logger.error(f"[PlaybackHistory] 获取播放历史记录失败: {str(e)}")
+            return jsonify({
+                "status": "error",
+                "message": f"获取播放历史记录失败: {str(e)}"
+            }), 500
+
+class AIseparatesaudioView(MethodView):
+    @PlayerErrorHandler.create_error_handler
+    async def get(self):
+        """
+        音频分离API（异步非阻塞式）
+        路由：/api/ai_separate_audio?file_path=<str:file_path>
+        参数：
+            file_path: 要分离的音频文件路径
+        返回：分离结果
+        """
+        # 获取文件路径参数
+        file_path = request.args.get('file_path', type=str)
+        if not file_path:
+            return jsonify({
+                "status": "error", 
+                "message": "文件路径参数不能为空"
+            }), 400
+
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            return jsonify({
+                "status": "error", 
+                "message": f"文件不存在: {file_path}"
+            }), 404
+
+        # 检查是否为音频文件
+        audio_extensions = {'.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg', '.wma'}
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext not in audio_extensions:
+            return jsonify({
+                "status": "error", 
+                "message": f"不支持的音频格式: {file_ext}"
+            }), 400
+
+        try:
+            # 创建音频分离器实例
+            separator = VocalSeparationAsync(max_workers=1)
+            
+            # 设置源文件路径
+            separator.set_source_path(file_path)
+            
+            # 设置模型（使用示例中的模型）
+            separator.set_model("UVR-MDX-NET-Inst_HQ_3.onnx")
+            
+            # 设置保存格式
+            separator.set_save_format(".mp3")
+            
+            # 设置输出路径（自动生成）
+            output_dir = os.path.dirname(file_path)
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
+            vocal_output_path = os.path.join(output_dir, f"{base_name}_Vocal.mp3")
+            instrumental_output_path = os.path.join(output_dir, f"{base_name}_Instrumental.mp3")
+            
+            player_logger.info(f"[AI分离] 开始处理音频文件: {file_path}")
+            print(f"[异步非阻塞模式] 开始音频分离: {os.path.basename(file_path)}")
+            
+            # 使用异步方法 - 这将创建独立进程，不阻塞当前请求
+            result = await separator.start_conversion_async(
+                input_path=file_path,
+                model_name="UVR-MDX-NET-Inst_HQ_3.onnx",
+                vocal_output_path=vocal_output_path,
+                instrumental_output_path=instrumental_output_path,
+                save_format=".mp3"
+            )
+            
+            # 清理资源
+            try:
+                await separator.cleanup()
+            except Exception as cleanup_error:
+                player_logger.warning(f"[AI分离] 清理资源时出现警告: {cleanup_error}")
+            
+            # 返回结果
+            if result.get("status") == "success":
+                return jsonify({
+                    "status": "success",
+                    "message": "音频分离完成",
+                    "input_file": file_path,
+                    "vocal_file": result.get("vocal_path") or vocal_output_path,
+                    "instrumental_file": result.get("instrumental_path") or instrumental_output_path,
+                    "processing_info": {
+                        "model": "UVR-MDX-NET-Inst_HQ_3.onnx",
+                        "output_format": "mp3",
+                        "mode": "异步非阻塞"
+                    }
+                }), 200
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": f"音频分离失败: {result.get('message', '未知错误')}",
+                    "input_file": file_path
+                }), 500
+                
+        except Exception as e:
+            player_logger.error(f"[AI分离] 处理音频文件失败: {str(e)}")
+            return jsonify({
+                "status": "error", 
+                "message": f"音频分离处理失败: {str(e)}"
+            }), 500
+
+class SetAudioTrackView(MethodView):
+
+    @PlayerErrorHandler.create_error_handler
+    async def get(self):
+        """
+        设置当前音频轨道
+        路由：/api/set_audio_track?track=<int:track>
+        参数：
+            track: 音频轨道索引，0为正常播放，1为人声，2为伴奏
+        返回：设置结果
+        """
+        track = request.args.get('track', type=int)
+        if track not in [0, 1, 2]:
+            return jsonify({
+                "status": "error",
+                "message": "无效的音频轨道索引，必须为0、1或2"
+            }), 400
+        try:
+            # 调用播放器设置音频轨道方法
+            player_manager.switch_audio_track(track)
+            
+            return jsonify({
+                "status": "success",
+                "message": f"已设置音频轨道为 {track}"
+            }), 200
+            
+        except Exception as e:
+            player_logger.error(f"[SetAudioTrack] 设置音频轨道失败: {str(e)}")
+            return jsonify({
+                "status": "error",
+                "message": f"设置音频轨道失败: {str(e)}"
+            }), 500

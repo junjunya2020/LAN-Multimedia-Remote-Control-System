@@ -87,6 +87,8 @@ function loadAudioMetadata() {
         document.getElementById('track-title').textContent = data.title || '未知标题';
         document.getElementById('track-artist').textContent = data.artist || '';
         document.getElementById('track-album').textContent = data.album || '';
+        document.getElementById('track-bitrate').textContent = data.bitrate || '';
+        document.getElementById('track-file-path').textContent = data.file_path || '';
         
         // 更新当前文件路径
         if (data.file_path) {
